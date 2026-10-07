@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Input Test</title>
+    <style>
+        body { background: #000; color: #fff; font-family: monospace; padding: 20px; }
+        #log { white-space: pre; }
+    </style>
+</head>
+<body>
+    <h2>Keyboard Input Test</h2>
+    <p>Press any key...</p>
+    <div id="log"></div>
+
+    <script>
+        const log = document.getElementById('log');
+
+        document.addEventListener('keydown', (e) => {
+            log.textContent += `Key pressed: "${e.key}" (code: ${e.code})\n`;
+        });
+
+        log.textContent = 'Waiting for keypress...\n';
+    </script>
+</body>
+</html>

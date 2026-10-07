@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Test - Pocket Tanks</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        #status {
+            padding: 20px;
+            border: 2px solid #fff;
+            margin-bottom: 20px;
+        }
+        #logs {
+            border: 1px solid #666;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px;
+        }
+        .log-init { color: #0f0; }
+        .log-turnchange { color: #0ff; }
+        .log-input { color: #ff0; }
+        .log-blocked { color: #f00; }
+        .log-success { color: #0f0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Pocket Tanks - Keyboard Input Debug</h2>
+
+    <div id="status">
+        <p>Status: <span id="connection-status">Connecting...</span></p>
+        <p>Player ID: <span id="player-id">-</span></p>
+        <p>Player Name: <span id="player-name">-</span></p>
+        <p>Is Active: <span id="is-active">-</span></p>
+        <p>Can Control: <span id="can-control">-</span></p>
+    </div>
+
+    <h3>Logs:</h3>
+    <div id="logs"></div>
+
+    <script>
+        const logs = document.getElementById('logs');
+        const statusEls = {
+            connection: document.getElementById('connection-status'),
+            playerId: document.getElementById('player-id'),
+            playerName: document.getElementById('player-name'),
+            isActive: document.getElementById('is-active'),
+            canControl: document.getElementById('can-control')
+        };
+
+        function addLog(message, className = '') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${className}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        let ws;
+        let myPlayerId = null;
+        let gameState = { players: [] };
+
+        // Connect to WebSocket
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//localhost:3000`;
+
+        addLog(`Connecting to ${wsUrl}...`);
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            addLog('✅ Connected to server', 'log-success');
+            statusEls.connection.textContent = 'Connected';
+            statusEls.connection.style.color = '#0f0';
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'init') {
+                myPlayerId = data.playerId;
+                gameState.players = data.players;
+
+                addLog(`INIT: Player ID=${data.playerId}, Name=${data.player.name}`, 'log-init');
+                addLog(`INIT: isActive=${data.player.isActive}`, 'log-init');
+
+                statusEls.playerId.textContent = data.playerId;
+                statusEls.playerName.textContent = data.player.name;
+                statusEls.isActive.textContent = data.player.isActive;
+                updateControlStatus();
+            }
+
+            if (data.type === 'turnChange') {
+                addLog(`TURNCHANGE: activePlayerId=${data.activePlayerId}`, 'log-turnchange');
+                addLog(`TURNCHANGE: players array included=${!!data.players}`, 'log-turnchange');
+
+                if (data.players) {
+                    gameState.players = data.players;
+                    const myPlayer = data.players.find(p => p.id === myPlayerId);
+                    if (myPlayer) {
+                        addLog(`TURNCHANGE: My isActive=${myPlayer.isActive}`, 'log-turnchange');
+                        statusEls.isActive.textContent = myPlayer.isActive;
+                        statusEls.isActive.style.color = myPlayer.isActive ? '#0f0' : '#f00';
+                        updateControlStatus();
+                    }
+                }
+            }
+        };
+
+        ws.onerror = (error) => {
+            addLog(`❌ WebSocket error: ${error}`, 'log-blocked');
+            statusEls.connection.textContent = 'Error';
+            statusEls.connection.style.color = '#f00';
+        };
+
+        ws.onclose = () => {
+            addLog('Disconnected from server', 'log-blocked');
+            statusEls.connection.textContent = 'Disconnected';
+            statusEls.connection.style.color = '#f00';
+        };
+
+        function updateControlStatus() {
+            const myPlayer = gameState.players.find(p => p.id === myPlayerId);
+            const canControl = myPlayer && myPlayer.isActive;
+            statusEls.canControl.textContent = canControl ? 'YES' : 'NO';
+            statusEls.canControl.style.color = canControl ? '#0f0' : '#f00';
+        }
+
+        // Keyboard test
+        document.addEventListener('keydown', (e) => {
+            const myPlayer = gameState.players.find(p => p.id === myPlayerId);
+
+            if (!myPlayer) {
+                addLog(`INPUT BLOCKED: No player found (myPlayerId=${myPlayerId})`, 'log-blocked');
+                return;
+            }
+
+            if (!myPlayer.isActive) {
+                addLog(`INPUT BLOCKED: Player not active (isActive=${myPlayer.isActive})`, 'log-blocked');
+                return;
+            }
+
+            addLog(`✅ INPUT ALLOWED: Key "${e.key}" pressed`, 'log-success');
+        });
+
+        addLog('Press any key to test keyboard input...');
+    </script>
+</body>
+</html>

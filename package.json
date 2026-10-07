@@ -1,20 +1,32 @@
 {
-  "name": "satellite-tracker",
+  "name": "pocket-tanks-multiplayer",
   "version": "1.0.0",
+  "description": "Multiplayer web-based Pocket Tanks with WebSocket support",
   "type": "module",
   "scripts": {
+    "start": "vite",
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "test": "node test-connection.js",
+    "test:cleanup": "node test-cleanup.js",
+    "test:turn": "node test-turn-switch.js",
+    "test:resources": "node test-resource-reset.js",
+    "test:cycling": "node test-turn-cycling.js",
+    "test:solo": "node test-single-player.js",
+    "test:active": "node test-isactive-flag.js"
   },
+  "keywords": [
+    "game",
+    "pocket-tanks",
+    "websocket",
+    "multiplayer"
+  ],
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "satellite.js": "^5.0.0",
-    "three": "^0.170.0"
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
-    "@types/three": "^0.170.0",
-    "typescript": "^5.6.3",
-    "vite": "^6.0.6"
+    "vite": "^5.0.0"
   }
 }

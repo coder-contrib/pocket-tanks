@@ -1,138 +1,106 @@
-# Satellite Tracker
+# Pocket Tanks - Multiplayer Edition
 
-A real-time 3D satellite tracking web application built with Three.js and TypeScript. Track thousands of satellites orbiting Earth with live position updates using official TLE data from CelesTrak.
+A minimalist black and white web-based multiplayer version of Pocket Tanks.
 
-![Satellite Tracker](./public/images/image.png)
+## 🚀 One Command Start
+
+```bash
+npm install
+npm start
+```
+
+Then open **http://localhost:5173** in multiple browser tabs!
 
 ## Features
 
-- 🌍 **Interactive 3D Earth Globe** - Smooth rotation and zoom controls
-- 🛰️ **Real-time Satellite Tracking** - Live position updates using Two-Line Element (TLE) data
-- 🎯 **Multiple Categories** - ISS, Starlink, GPS, Weather, OneWeb, Amateur Radio satellites
-- 🔍 **Search & Filter** - Find specific satellites by name or filter by category
-- 📡 **Orbital Visualization** - Display satellite orbits and trajectories
-- 🏷️ **Smart Labels** - Toggle satellite name labels on/off
-- 🖱️ **Hover Details** - Hover over satellites to see detailed orbital information
-- 👆 **Click to Select** - Click satellites to select and show their orbit
-- ⚡ **Optimized Performance** - 10 FPS target, optimized for 1 vCPU / 2GB containers
-
-## Technology Stack
-
-- **TypeScript** - Type-safe development
-- **Three.js** - 3D graphics rendering
-- **satellite.js** - SGP4/SDP4 satellite position calculations
-- **Vite** - Fast build tool and dev server
-- **CelesTrak API** - Official NORAD satellite data
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-
-### Installation
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. (Optional) Configure port by creating `.env` file:
-```bash
-PORT=8080  # Default is 5173
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-3. Open your browser to `http://localhost:5173`
-
-### Building for Production
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist/` directory.
-
-## Deployment
-
-### Docker (Recommended)
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# Access at http://localhost:8080
-```
-
-### Manual Docker Build
-```bash
-docker build -t satellite-tracker .
-docker run -d --name satellite-tracker --cpus="1.0" --memory="2g" -p 8080:80 satellite-tracker
-```
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment guides including:
-- Kubernetes deployment
-- AWS ECS, Google Cloud Run, Azure Container Instances
-- Resource configuration and scaling
-- Monitoring and troubleshooting
-- Production recommendations
+- 🎮 **Real-time multiplayer** - each browser tab = new player
+- 🎯 **Friendly player names** - 20 unique names like "Tank Commander", "Artillery Ace"
+- ⚡ **Vite with HMR** - instant code updates
+- 🎯 **Server-authoritative** - no cheating possible
+- ⏱️ **Auto-disconnect** - removes idle players after 60s
+- 🧹 **Clean player removal** - proper WebSocket cleanup and name recycling
+- 🏔️ **Destructible terrain** - explosions crater the ground
+- 🎨 **Black/white line art** - minimalist aesthetic
 
 ## How It Works
 
-1. **Data Source**: Fetches Two-Line Element (TLE) data from CelesTrak's public API
-2. **Propagation**: Uses SGP4/SDP4 algorithms via satellite.js to calculate real-time positions
-3. **Visualization**: Renders satellites as colored dots on a 3D Earth globe using Three.js
-4. **Updates**: Updates satellite positions at 3.3 Hz (every 300ms) for optimal performance
-5. **Rendering**: Targets 10 FPS for smooth animation with minimal resource usage
-
-## Satellite Categories
-
-- **ISS & Space Stations** - International Space Station and other crewed stations
-- **Starlink** - SpaceX satellite constellation for internet
-- **GPS Operational** - Global Positioning System satellites
-- **Weather** - Weather monitoring satellites
-- **OneWeb** - OneWeb satellite constellation
-- **Amateur Radio** - Ham radio satellites
-
-Total: ~5,000+ satellites
+When you run `npm start`:
+1. **Vite starts** on port 5173 (serves the game UI with HMR)
+2. **WebSocket server starts** on port 3000 (handles multiplayer logic)
+3. Open multiple tabs → each becomes a new player
+4. Players take turns automatically
 
 ## Controls
 
-- **Left Mouse** - Rotate view
-- **Right Mouse / Scroll** - Zoom in/out
-- **Hover over satellite** - View detailed information (altitude, inclination, period, etc.)
-- **Click satellite** - Select and show orbital path
-- **Search Box** - Find satellites by name
-- **Category Filters** - Show/hide satellite groups
-- **Show Orbits** - Display orbital path for selected satellite
-- **Show Labels** - Toggle satellite name labels
+| Key | Action |
+|-----|--------|
+| **A/D** | Move tank left/right |
+| **W/S** | Adjust turret angle |
+| **Q/E** | Adjust shot power |
+| **SPACE** | Fire missile |
+| **U** | End turn manually |
 
-## Data Attribution
+## Game Rules
 
-Satellite data provided by [CelesTrak](https://celestrak.org) - NORAD Two-Line Element Sets
+- Each player: **5 bullets**, **4 moves**, **100 health**
+- Only the **active player** can control their tank
+- Physics-based projectiles with gravity
+- Direct hits deal more damage
+- Terrain is destructible
+- Idle 60s = auto-disconnect
 
-## Performance
+## Environment Config
 
-Optimized for ultra-low resource containerized environments:
-- **Target**: 1 vCPU / 2GB memory
-- **Frame rate**: 10 FPS
-- **Satellites**: ~5,000+ (all categories)
-- **Stars**: 1,000 (reduced for performance)
-- **Memory usage**: ~400-600 MB
-- **CPU usage**: ~30-40% of single vCPU
+Optional `.env` file:
 
-See [PERFORMANCE_1vCPU.md](PERFORMANCE_1vCPU.md) for detailed optimization notes.
+```env
+PORT=3000              # WebSocket server port
+IDLE_TIMEOUT=60000     # Idle timeout in milliseconds
+```
 
-**Previous config** (2 vCPU / 4GB): See [PERFORMANCE.md](PERFORMANCE.md)
+## Commands
 
-## License
+```bash
+npm start           # Start Vite + WebSocket server
+npm test            # Test WebSocket connections
+npm run test:cleanup # Test cleanup & name recycling
+```
 
-MIT
+## Architecture
 
-## Contributing
+```
+┌──────────────────┐         ┌───────────────────┐
+│  Browser Tab 1   │         │                   │
+│  localhost:5173  │◄───WS───►│  WebSocket Server │
+├──────────────────┤         │  localhost:3000   │
+│  Browser Tab 2   │◄───WS───►│                   │
+│  localhost:5173  │         │  • Game logic     │
+├──────────────────┤         │  • Physics (60fps)│
+│  Browser Tab N   │◄───WS───►│  • Idle tracking  │
+└──────────────────┘         └───────────────────┘
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+**Vite Plugin:** Automatically starts the WebSocket server when Vite starts, so you only need one command!
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `server.js` | WebSocket server + game logic |
+| `game.js` | Client rendering + WebSocket |
+| `index.html` | Game UI |
+| `style.css` | Styling |
+| `vite.config.js` | Vite config + server plugin |
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Port 3000 in use | Set `PORT=8080` in `.env` |
+| Port 5173 in use | Change in `vite.config.js` |
+| Disconnected | Server might not be running - check console |
+| Auto-disconnect | 60s idle - stay active! |
+
+---
+
+Built with Node.js + WebSockets + Vite
